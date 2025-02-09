@@ -8,3 +8,5 @@
 /.packages
 /ios/Podfile
 /pubspec.lock
+
+.vscode/templates

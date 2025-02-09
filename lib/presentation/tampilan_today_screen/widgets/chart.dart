@@ -39,7 +39,8 @@ class BarChartSample2State extends State<BarChartSample2> {
       var doValue = doc['DO']; // Adjust this according to your Firestore schema
       var phValue = doc['pH']; // Adjust this according to your Firestore schema
       // Create BarChartGroupData object
-      var barGroup = makeGroupData(barGroups.length, doValue.toDouble(), phValue.toDouble());
+      var barGroup = makeGroupData(
+          barGroups.length, doValue.toDouble(), phValue.toDouble());
       barGroups.add(barGroup);
     });
 
@@ -116,7 +117,7 @@ class BarChartSample2State extends State<BarChartSample2> {
     );
   }
 
-   Widget leftTitles(double value, TitleMeta meta) {
+  Widget leftTitles(double value, TitleMeta meta) {
     const style = TextStyle(
       color: Color(0xff7589a2),
       fontWeight: FontWeight.bold,
@@ -139,7 +140,7 @@ class BarChartSample2State extends State<BarChartSample2> {
     );
   }
 
-    Widget bottomTitles(double value, TitleMeta meta) {
+  Widget bottomTitles(double value, TitleMeta meta) {
     final titles = <String>['Mn', 'Te', 'Wd', 'Tu', 'Fr', 'St', 'Su'];
 
     final Widget text = Text(

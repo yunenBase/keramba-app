@@ -1,76 +1,46 @@
+import 'package:aini_s_application1/presentation/tampilan_today_screen/widgets/lineChart.dart';
 import 'package:flutter/material.dart';
 import '../../core/app_export.dart';
-import '../../widgets/custom_text_form_field.dart';
 import 'widgets/viewhierarchylist_item_widget.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:fl_chart/fl_chart.dart';
-import 'package:intl/intl.dart';
 
 // ignore_for_file: must_be_immutable
-class TampilanTodayScreen extends StatelessWidget {
-  TampilanTodayScreen({Key? key})
-      : super(
-          key: key,
-        );
+class TampilanTodayScreen extends StatefulWidget {
+  TampilanTodayScreen({Key? key}) : super(key: key);
 
+  @override
+  State<TampilanTodayScreen> createState() => _TampilanTodayScreenState();
+}
+
+class _TampilanTodayScreenState extends State<TampilanTodayScreen> {
   TextEditingController vectornineteenController = TextEditingController();
-
   TextEditingController vectorController = TextEditingController();
-
   TextEditingController vector1Controller = TextEditingController();
+
+  // 🔹 Fungsi untuk refresh data
+  Future<void> _refreshData() async {
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        resizeToAvoidBottomInset: false,
-        body: SingleChildScrollView(
-          child: SizedBox(
-            width: double.maxFinite,
-            child: Column(
-              children: [
-                SizedBox(height: 14.v),
-                _buildViewHierarchyList(context),
-                SizedBox(height: 20,),
-                 Padding(
-                  padding: const EdgeInsets.only(left: 20.0),
-                  child: Row(
-                    children: [
-                      Container(
-                      padding: EdgeInsets.all(3),
-                      decoration: BoxDecoration(
-                      color: Colors.amber,
-                      borderRadius: BorderRadius.circular(3), ),
-                      child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('DO')
-                      ],
-                        ),
-                      ),
-                      SizedBox(width: 10,),
-                      Container(
-                      padding: EdgeInsets.all(3),
-                      decoration: BoxDecoration(
-                      color: Colors.indigo,
-                      borderRadius: BorderRadius.circular(3), ),
-                      child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('pH', style: TextStyle(color: Colors.white),)
-                      ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                BarChartSample2(),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 20.0),
-                  child: Text('Jam'),
-                ),
-              ],
-            ),
+    return Scaffold(
+      resizeToAvoidBottomInset: false,
+      body: RefreshIndicator(
+        onRefresh: _refreshData, // 🔹 Tambahkan fungsi refresh
+        child: SingleChildScrollView(
+          physics:
+              AlwaysScrollableScrollPhysics(), // 🔹 Supaya bisa ditarik meski tidak bisa scroll
+          child: Column(
+            children: [
+              SizedBox(height: 14.v),
+              _buildViewHierarchyList(context),
+              SizedBox(height: 20),
+              SalesChartWidget(), // 🔹 Akan reload saat refresh
+              Padding(
+                padding: const EdgeInsets.only(bottom: 20.0),
+                child: Text('Waktu'),
+              ),
+            ],
           ),
         ),
       ),
@@ -80,17 +50,12 @@ class TampilanTodayScreen extends StatelessWidget {
   /// Section Widget
   Widget _buildViewHierarchyList(BuildContext context) {
     return Padding(
-      padding: EdgeInsets.only(
-        left: 19.h,
-        right: 23.h,
-      ),
+      padding: EdgeInsets.only(left: 19.h, right: 23.h),
       child: ListView.separated(
         physics: NeverScrollableScrollPhysics(),
         shrinkWrap: true,
         separatorBuilder: (context, index) {
-          return SizedBox(
-            height: 18.v,
-          );
+          return SizedBox(height: 18.v);
         },
         itemCount: 1,
         itemBuilder: (context, index) {
@@ -99,30 +64,4 @@ class TampilanTodayScreen extends StatelessWidget {
       ),
     );
   }
-  /// Section Widget
-  // Widget _buildViewOksigenHierarchyList(BuildContext context) {
-  //   return Padding(
-  //     padding: EdgeInsets.only(
-  //       left: 19.h,
-  //       right: 23.h,
-  //     ),
-  //     child: ListView.separated(
-  //       physics: NeverScrollableScrollPhysics(),
-  //       shrinkWrap: true,
-  //       separatorBuilder: (context, index) {
-  //         return SizedBox(
-  //           height: 18.v,
-  //         );
-  //       },
-  //       itemCount: 1,
-  //       itemBuilder: (context, index) {
-  //         return ViewOksigen();
-  //       },
-  //     ),
-  //   );
-  // }
-
 }
-
-
-
