@@ -1,3 +1,4 @@
+import 'package:aini_s_application1/presentation/tampilan_today_screen/widgets/currentValue.dart';
 import 'package:aini_s_application1/presentation/tampilan_today_screen/widgets/lineChart.dart';
 import 'package:flutter/material.dart';
 import '../../core/app_export.dart';
@@ -33,7 +34,8 @@ class _TampilanTodayScreenState extends State<TampilanTodayScreen> {
           child: Column(
             children: [
               SizedBox(height: 14.v),
-              _buildViewHierarchyList(context),
+              // _buildViewHierarchyList(context),
+              LatestSensorData(),
               SizedBox(height: 20),
               SalesChartWidget(), // 🔹 Akan reload saat refresh
               Padding(

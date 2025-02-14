@@ -1,6 +1,7 @@
 import 'package:aini_s_application1/api/firebase_api.dart';
 import 'package:aini_s_application1/service/sensor_monitor.dart';
 import 'package:awesome_notifications/awesome_notifications.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -15,6 +16,7 @@ FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -41,6 +43,9 @@ Future<void> main() async {
     debug: true,
   );
 
+  FirebaseFirestore.instance.settings = const Settings(
+    persistenceEnabled: true, // Aktifkan cache offline
+  );
   // Inisialisasi Local Notifications
   await initLocalNotifications();
 
@@ -82,7 +87,7 @@ class MyApp extends StatelessWidget {
       builder: (context, orientation, deviceType) {
         return MaterialApp(
           theme: theme,
-          title: 'aini_s_application1',
+          title: 'Karamba Warning',
           debugShowCheckedModeBanner: false,
           initialRoute: AppRoutes.initialRoute,
           routes: AppRoutes.routes,

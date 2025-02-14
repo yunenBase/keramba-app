@@ -12,7 +12,9 @@
 
     <application
         android:label="aini_s_application1"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        usesCleartextTraffic="true"
+        androidSupportRtl="true">
         <activity
             android:name=".MainActivity"
             android:launchMode="singleTop"

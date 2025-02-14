@@ -61,10 +61,21 @@ class SensorMonitor {
 
         print("🔍 Data sensor: DO=$doLevel, pH=$pHLevel");
 
-        if (doLevel < 5.0 || pHLevel < 6.5) {
-          print("⚠️ Batas aman dilanggar! Mengirim notifikasi...");
-          _showNotification("Peringatan Air Keramba!",
-              "DO: $doLevel, pH: $pHLevel - Periksa kondisi air!");
+        if (doLevel > 5 && pHLevel <= 6) {
+          print(
+              "⚠️ Peringatan: pH tidak sesuai standar, air dalam keadaan asam");
+          _showNotification(
+              "Peringatan", "pH tidak sesuai standar, air dalam keadaan asam");
+        } else if (doLevel <= 5 && pHLevel > 6) {
+          print(
+              "⚠️ Peringatan: Konsentrasi oksigen tidak sesuai standar, kadar oksigen mengalami penurunan");
+          _showNotification("Peringatan",
+              "Konsentrasi oksigen tidak sesuai standar, kadar oksigen mengalami penurunan");
+        } else if (pHLevel <= 6 && doLevel <= 5) {
+          print(
+              "🚨 Evakuasi Ikan: Segera evakuasi ikan, terjadi tubo balerang!");
+          _showNotification(
+              "Evakuasi Ikan", "Segera evakuasi ikan, terjadi tubo balerang!");
         }
       }
     }, onError: (error) {
