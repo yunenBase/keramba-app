@@ -1,744 +1,207 @@
 import 'package:flutter/material.dart';
-import '../../core/app_export.dart';
-import '../../widgets/custom_text_form_field.dart'; // ignore_for_file: must_be_immutable
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:table_calendar/table_calendar.dart';
+import 'package:syncfusion_flutter_charts/charts.dart';
 
-// ignore_for_file: must_be_immutable
-class TampilanThisMonthScreen extends StatelessWidget {
-  TampilanThisMonthScreen({Key? key})
-      : super(
-          key: key,
-        );
+// Function untuk mendapatkan nama hari dalam Bahasa Indonesia
+String getDayOfWeek(int weekday) {
+  switch (weekday) {
+    case 1:
+      return 'senin';
+    case 2:
+      return 'selasa';
+    case 3:
+      return 'rabu';
+    case 4:
+      return 'kamis';
+    case 5:
+      return 'jumat';
+    case 6:
+      return 'sabtu';
+    case 7:
+      return 'minggu';
+    default:
+      return '';
+  }
+}
 
-  TextEditingController vectornineteenController = TextEditingController();
+class TampilanThisMonthScreen extends StatefulWidget {
+  @override
+  _TampilanThisMonthScreenState createState() =>
+      _TampilanThisMonthScreenState();
+}
 
-  TextEditingController vectorController = TextEditingController();
+class _TampilanThisMonthScreenState extends State<TampilanThisMonthScreen> {
+  DateTime _selectedDate = DateTime.now();
+  List<SalesData> _doData = [];
+  List<SalesData> _phData = [];
+  bool _isLoading = false; // Tambahkan indikator loading
 
-  TextEditingController vector1Controller = TextEditingController();
+  late ZoomPanBehavior _zoomPanBehavior = ZoomPanBehavior(
+    enablePinching: true,
+    zoomMode: ZoomMode.x,
+    enablePanning: true,
+    enableDoubleTapZooming: true,
+  );
+
+  @override
+  void initState() {
+    super.initState();
+
+    _zoomPanBehavior = ZoomPanBehavior(
+      enablePinching: true,
+      zoomMode: ZoomMode.x,
+      enablePanning: true,
+      enableDoubleTapZooming: true,
+    );
+    fetchData(_selectedDate); // Fetch data awal
+  }
+
+  void _onDaySelected(DateTime selectedDay, DateTime focusedDay) {
+    setState(() {
+      _selectedDate = selectedDay;
+      fetchData(_selectedDate); // Fetch data sesuai tanggal yang dipilih
+    });
+  }
+
+  Future<void> fetchData(DateTime date) async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    String dateFormatted =
+        "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+    String dayOfWeek = getDayOfWeek(date.weekday);
+
+    if (dayOfWeek.isEmpty) {
+      setState(() {
+        _isLoading = false;
+      });
+      return;
+    }
+
+    try {
+      var querySnapshot = await FirebaseFirestore.instance
+          .collection('history')
+          .doc(dateFormatted)
+          .collection(dayOfWeek)
+          .get();
+
+      List<SalesData> doData = [];
+      List<SalesData> phData = [];
+      DateTime? lastAddedTime;
+
+      for (var doc in querySnapshot.docs) {
+        String time = doc.id;
+        String formattedTime = time.substring(0, 5);
+
+        double doValue = doc['DO'] != null ? doc['DO'].toDouble() : 0;
+        double phValue = doc['pH'] != null ? doc['pH'].toDouble() : 0;
+
+        DateTime currentTime = DateTime.parse("$dateFormatted $time");
+
+        if (lastAddedTime == null ||
+            currentTime.difference(lastAddedTime).inMinutes >= 15) {
+          doData.add(SalesData(formattedTime, doValue));
+          phData.add(SalesData(formattedTime, phValue));
+
+          lastAddedTime = currentTime;
+        }
+      }
+
+      setState(() {
+        _doData = doData;
+        _phData = phData;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      print("Error fetching data: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        resizeToAvoidBottomInset: false,
-        body: SizedBox(
-          width: double.maxFinite,
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                _buildBulanColumn(context),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  /// Section Widget
-  Widget _buildKarambawaColumn(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.symmetric(
-        horizontal: 39.h,
-        vertical: 6.v,
-      ),
-      decoration: AppDecoration.fillBlueGray,
-      child: Column(
+    return Scaffold(
+      body: Column(
         children: [
-          SizedBox(height: 29.v),
-          SizedBox(
-            width: 78.h,
-            child: Text(
-              "Karamba Warning",
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.titleLarge,
+          // Kalender
+          TableCalendar(
+            firstDay: DateTime.utc(2023, 1, 1),
+            lastDay: DateTime.utc(2030, 12, 31),
+            focusedDay: _selectedDate,
+            selectedDayPredicate: (day) => isSameDay(day, _selectedDate),
+            onDaySelected: _onDaySelected,
+            calendarStyle: CalendarStyle(
+              todayDecoration: BoxDecoration(
+                color: Colors.blue,
+                shape: BoxShape.circle,
+              ),
+              selectedDecoration: BoxDecoration(
+                color: Colors.green,
+                shape: BoxShape.circle,
+              ),
             ),
+            availableCalendarFormats: {CalendarFormat.month: 'Month'},
           ),
-          SizedBox(height: 30.v),
-          Padding(
-            padding: EdgeInsets.only(right: 2.h),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  "Today",
-                  style: CustomTextStyles.bodySmallInder,
-                ),
-                Spacer(
-                  flex: 57,
-                ),
-                Text(
-                  "Weekly",
-                  style: theme.textTheme.bodySmall,
-                ),
-                Spacer(
-                  flex: 42,
-                ),
-                Container(
-                  decoration: AppDecoration.outlineBlack,
-                  child: Text(
-                    "this month",
-                    style: theme.textTheme.bodySmall,
-                  ),
-                )
-              ],
-            ),
-          )
-        ],
-      ),
-    );
-  }
 
-  /// Section Widget
-  Widget _buildBulanColumn(BuildContext context) {
-    return Container(
-      width: 348.h,
-      margin: EdgeInsets.symmetric(horizontal: 21.h),
-      padding: EdgeInsets.symmetric(
-        horizontal: 23.h,
-        vertical: 7.v,
-      ),
-      decoration: AppDecoration.outlineBlack900.copyWith(
-        borderRadius: BorderRadiusStyle.roundedBorder10,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(height: 10.v),
+          SizedBox(height: 20),
+
+          // Tampilkan tanggal yang dipilih
           Text(
-            "Bulan",
-            style: theme.textTheme.headlineSmall,
-          )
-        ],
-      ),
-    );
-  }
+            "Data ${getDayOfWeek(_selectedDate.weekday)[0].toUpperCase()}${getDayOfWeek(_selectedDate.weekday).substring(1)} ${_selectedDate.toLocal().toString().split(' ')[0]}",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
 
-  /// Section Widget
-  Widget _buildChartStack(BuildContext context) {
-    return Container(
-      height: 241.v,
-      width: 312.h,
-      padding: EdgeInsets.symmetric(horizontal: 2.h),
-      decoration: AppDecoration.fillTeal,
-      child: Stack(
-        alignment: Alignment.bottomLeft,
-        children: [
-          CustomImageView(
-            imagePath: ImageConstant.imgGroup,
-            height: 190.v,
-            width: 279.h,
-            alignment: Alignment.topRight,
-          ),
-          Align(
-            alignment: Alignment.bottomLeft,
-            child: Container(
-              height: 62.v,
-              width: 10.h,
-              margin: EdgeInsets.only(
-                left: 58.h,
-                bottom: 42.v,
-              ),
-              decoration: BoxDecoration(
-                color: appTheme.gray400,
-              ),
-            ),
-          ),
-          Align(
-            alignment: Alignment.bottomLeft,
-            child: Container(
-              height: 117.v,
-              width: 10.h,
-              margin: EdgeInsets.only(
-                left: 86.h,
-                bottom: 42.v,
-              ),
-              decoration: BoxDecoration(
-                color: appTheme.gray400,
-              ),
-            ),
-          ),
-          CustomImageView(
-            imagePath: ImageConstant.imgGroupGray400,
-            height: 15.v,
-            width: 10.h,
-            alignment: Alignment.bottomLeft,
-            margin: EdgeInsets.only(
-              left: 114.h,
-              bottom: 42.v,
-            ),
-          ),
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: Container(
-              height: 82.v,
-              width: 10.h,
-              margin: EdgeInsets.only(bottom: 42.v),
-              decoration: BoxDecoration(
-                color: appTheme.gray400,
-              ),
-            ),
-          ),
-          Align(
-            alignment: Alignment.bottomRight,
-            child: Container(
-              height: 121.v,
-              width: 10.h,
-              margin: EdgeInsets.only(
-                right: 126.h,
-                bottom: 42.v,
-              ),
-              decoration: BoxDecoration(
-                color: appTheme.gray400,
-              ),
-            ),
-          ),
-          Align(
-            alignment: Alignment.bottomRight,
-            child: Container(
-              height: 60.v,
-              width: 10.h,
-              margin: EdgeInsets.only(
-                right: 98.h,
-                bottom: 42.v,
-              ),
-              decoration: BoxDecoration(
-                color: appTheme.gray400,
-              ),
-            ),
-          ),
-          Align(
-            alignment: Alignment.bottomRight,
-            child: Container(
-              height: 97.v,
-              width: 10.h,
-              margin: EdgeInsets.only(
-                right: 70.h,
-                bottom: 42.v,
-              ),
-              decoration: BoxDecoration(
-                color: appTheme.gray400,
-              ),
-            ),
-          ),
-          Align(
-            alignment: Alignment.topRight,
-            child: Container(
-              height: 164.v,
-              width: 10.h,
-              margin: EdgeInsets.only(
-                top: 33.v,
-                right: 42.h,
-              ),
-              decoration: BoxDecoration(
-                color: appTheme.gray400,
-              ),
-            ),
-          ),
-          Align(
-            alignment: Alignment.topRight,
-            child: Container(
-              height: 191.v,
-              width: 10.h,
-              margin: EdgeInsets.only(
-                top: 7.v,
-                right: 14.h,
-              ),
-              decoration: BoxDecoration(
-                color: appTheme.gray400,
-              ),
-            ),
-          ),
-          CustomImageView(
-            imagePath: ImageConstant.imgGroupBlueGray900,
-            height: 39.v,
-            width: 10.h,
-            alignment: Alignment.bottomLeft,
-            margin: EdgeInsets.only(
-              left: 42.h,
-              bottom: 42.v,
-            ),
-          ),
-          Align(
-            alignment: Alignment.bottomLeft,
-            child: Container(
-              height: 76.v,
-              width: 10.h,
-              margin: EdgeInsets.only(
-                left: 70.h,
-                bottom: 42.v,
-              ),
-              decoration: BoxDecoration(
-                color: appTheme.blueGray900,
-              ),
-            ),
-          ),
-          Padding(
-            padding: EdgeInsets.only(
-              left: 98.h,
-              bottom: 42.v,
-            ),
-            child: CustomTextFormField(
-              width: 10.h,
-              controller: vectornineteenController,
-              alignment: Alignment.bottomLeft,
-            ),
-          ),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: Container(
-              height: 163.v,
-              width: 10.h,
-              margin: EdgeInsets.only(left: 126.h),
-              decoration: BoxDecoration(
-                color: appTheme.blueGray900,
-              ),
-            ),
-          ),
-          Padding(
-            padding: EdgeInsets.only(
-              right: 114.h,
-              bottom: 42.v,
-            ),
-            child: CustomTextFormField(
-              width: 10.h,
-              controller: vectorController,
-              alignment: Alignment.bottomRight,
-            ),
-          ),
-          CustomImageView(
-            imagePath: ImageConstant.imgGroupBlueGray900,
-            height: 22.v,
-            width: 10.h,
-            alignment: Alignment.bottomRight,
-            margin: EdgeInsets.only(
-              right: 86.h,
-              bottom: 42.v,
-            ),
-          ),
-          CustomImageView(
-            imagePath: ImageConstant.imgGroupBlueGray900,
-            height: 10.adaptSize,
-            width: 10.adaptSize,
-            alignment: Alignment.bottomRight,
-            margin: EdgeInsets.only(
-              right: 58.h,
-              bottom: 42.v,
-            ),
-          ),
-          Padding(
-            padding: EdgeInsets.only(
-              right: 30.h,
-              bottom: 42.v,
-            ),
-            child: CustomTextFormField(
-              width: 10.h,
-              controller: vector1Controller,
-              textInputAction: TextInputAction.done,
-              alignment: Alignment.bottomRight,
-            ),
-          ),
-          Align(
-            alignment: Alignment.bottomRight,
-            child: Container(
-              height: 82.v,
-              width: 10.h,
-              margin: EdgeInsets.only(
-                right: 2.h,
-                bottom: 42.v,
-              ),
-              decoration: BoxDecoration(
-                color: appTheme.blueGray900,
-              ),
-            ),
-          ),
-          Align(
-            alignment: Alignment.topLeft,
-            child: Padding(
-              padding: EdgeInsets.only(left: 27.h),
-              child: SizedBox(
-                height: 198.v,
-                child: VerticalDivider(
-                  width: 1.h,
-                  thickness: 1.v,
-                  indent: 6.h,
+          SizedBox(height: 10),
+
+          // Loading Indicator
+          if (_isLoading)
+            CircularProgressIndicator()
+          else if (_doData.isEmpty || _phData.isEmpty)
+            Text("Tidak ada data tersedia.")
+          else
+            // LineChart
+            Expanded(
+              child: SfCartesianChart(
+                zoomPanBehavior: _zoomPanBehavior,
+                primaryXAxis: CategoryAxis(
+                  autoScrollingDelta: 10,
+                  autoScrollingMode: AutoScrollingMode.start,
                 ),
-              ),
-            ),
-          ),
-          Align(
-            alignment: Alignment.bottomLeft,
-            child: Padding(
-              padding: EdgeInsets.only(
-                left: 16.h,
-                bottom: 36.v,
-              ),
-              child: Text(
-                "0",
-                style: theme.textTheme.bodySmall,
-              ),
-            ),
-          ),
-          Align(
-            alignment: Alignment.topLeft,
-            child: Padding(
-              padding: EdgeInsets.only(
-                left: 9.h,
-                top: 1.v,
-                right: 279.h,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(
-                        width: 13.h,
-                        child: Text(
-                          "1000",
-                          maxLines: 3,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.right,
-                          style: theme.textTheme.bodySmall,
-                        ),
-                      ),
-                      Container(
-                        height: 1.v,
-                        width: 2.h,
-                        margin: EdgeInsets.only(
-                          left: 2.h,
-                          top: 4.v,
-                          bottom: 38.v,
-                        ),
-                        decoration: BoxDecoration(
-                          color: appTheme.black900,
-                        ),
-                      )
-                    ],
+                legend: Legend(isVisible: true),
+                tooltipBehavior: TooltipBehavior(enable: true),
+                series: <CartesianSeries<SalesData, String>>[
+                  LineSeries<SalesData, String>(
+                    dataSource: _doData,
+                    xValueMapper: (SalesData sales, _) => sales.time,
+                    yValueMapper: (SalesData sales, _) => sales.value,
+                    name: 'DO',
+                    color: Colors.amber,
+                    dataLabelSettings: DataLabelSettings(isVisible: true),
                   ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(
-                        width: 7.h,
-                        child: Text(
-                          "750",
-                          maxLines: 3,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.right,
-                          style: theme.textTheme.bodySmall,
-                        ),
-                      ),
-                      Container(
-                        height: 1.v,
-                        width: 2.h,
-                        margin: EdgeInsets.only(
-                          left: 2.h,
-                          top: 8.v,
-                          bottom: 34.v,
-                        ),
-                        decoration: BoxDecoration(
-                          color: appTheme.black900,
-                        ),
-                      )
-                    ],
+                  LineSeries<SalesData, String>(
+                    dataSource: _phData,
+                    xValueMapper: (SalesData sales, _) => sales.time,
+                    yValueMapper: (SalesData sales, _) => sales.value,
+                    name: 'pH',
+                    color: Colors.indigo,
+                    dataLabelSettings: DataLabelSettings(isVisible: true),
                   ),
-                  SizedBox(height: 3.v),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(
-                        width: 7.h,
-                        child: Text(
-                          "500",
-                          maxLines: 3,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.right,
-                          style: theme.textTheme.bodySmall,
-                        ),
-                      ),
-                      Container(
-                        height: 1.v,
-                        width: 2.h,
-                        margin: EdgeInsets.only(
-                          left: 2.h,
-                          top: 9.v,
-                          bottom: 34.v,
-                        ),
-                        decoration: BoxDecoration(
-                          color: appTheme.black900,
-                        ),
-                      )
-                    ],
-                  ),
-                  SizedBox(height: 3.v),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(
-                        width: 7.h,
-                        child: Text(
-                          "250",
-                          maxLines: 3,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.right,
-                          style: theme.textTheme.bodySmall,
-                        ),
-                      ),
-                      Container(
-                        height: 1.v,
-                        width: 2.h,
-                        margin: EdgeInsets.only(
-                          left: 2.h,
-                          top: 9.v,
-                          bottom: 34.v,
-                        ),
-                        decoration: BoxDecoration(
-                          color: appTheme.black900,
-                        ),
-                      )
-                    ],
-                  )
                 ],
               ),
             ),
-          ),
-          Align(
-            alignment: Alignment.bottomRight,
-            child: Padding(
-              padding: EdgeInsets.only(
-                left: 25.h,
-                bottom: 9.v,
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Container(
-                        height: 1.v,
-                        width: 2.h,
-                        margin: EdgeInsets.only(
-                          top: 1.v,
-                          bottom: 6.v,
-                        ),
-                        decoration: BoxDecoration(
-                          color: appTheme.black900,
-                        ),
-                      ),
-                      SizedBox(
-                        height: 9.v,
-                        width: 279.h,
-                        child: Stack(
-                          alignment: Alignment.bottomLeft,
-                          children: [
-                            Align(
-                              alignment: Alignment.topCenter,
-                              child: Padding(
-                                padding: EdgeInsets.only(top: 1.v),
-                                child: SizedBox(
-                                  width: 279.h,
-                                  child: Divider(),
-                                ),
-                              ),
-                            ),
-                            Align(
-                              alignment: Alignment.bottomLeft,
-                              child: Container(
-                                height: 7.v,
-                                width: 1.h,
-                                margin: EdgeInsets.only(left: 13.h),
-                                decoration: BoxDecoration(
-                                  color: appTheme.black900,
-                                ),
-                              ),
-                            ),
-                            Align(
-                              alignment: Alignment.bottomLeft,
-                              child: Container(
-                                height: 7.v,
-                                width: 1.h,
-                                margin: EdgeInsets.only(left: 41.h),
-                                decoration: BoxDecoration(
-                                  color: appTheme.black900,
-                                ),
-                              ),
-                            ),
-                            Align(
-                              alignment: Alignment.bottomLeft,
-                              child: Container(
-                                height: 7.v,
-                                width: 1.h,
-                                margin: EdgeInsets.only(left: 69.h),
-                                decoration: BoxDecoration(
-                                  color: appTheme.black900,
-                                ),
-                              ),
-                            ),
-                            Align(
-                              alignment: Alignment.bottomLeft,
-                              child: Container(
-                                height: 7.v,
-                                width: 1.h,
-                                margin: EdgeInsets.only(left: 97.h),
-                                decoration: BoxDecoration(
-                                  color: appTheme.black900,
-                                ),
-                              ),
-                            ),
-                            Align(
-                              alignment: Alignment.bottomLeft,
-                              child: Container(
-                                height: 7.v,
-                                width: 1.h,
-                                margin: EdgeInsets.only(left: 125.h),
-                                decoration: BoxDecoration(
-                                  color: appTheme.black900,
-                                ),
-                              ),
-                            ),
-                            Align(
-                              alignment: Alignment.bottomRight,
-                              child: Container(
-                                height: 7.v,
-                                width: 1.h,
-                                margin: EdgeInsets.only(right: 124.h),
-                                decoration: BoxDecoration(
-                                  color: appTheme.black900,
-                                ),
-                              ),
-                            ),
-                            Align(
-                              alignment: Alignment.bottomRight,
-                              child: Container(
-                                height: 7.v,
-                                width: 1.h,
-                                margin: EdgeInsets.only(right: 96.h),
-                                decoration: BoxDecoration(
-                                  color: appTheme.black900,
-                                ),
-                              ),
-                            ),
-                            Align(
-                              alignment: Alignment.bottomRight,
-                              child: Container(
-                                height: 7.v,
-                                width: 1.h,
-                                margin: EdgeInsets.only(right: 68.h),
-                                decoration: BoxDecoration(
-                                  color: appTheme.black900,
-                                ),
-                              ),
-                            ),
-                            Align(
-                              alignment: Alignment.bottomRight,
-                              child: Container(
-                                height: 7.v,
-                                width: 1.h,
-                                margin: EdgeInsets.only(right: 40.h),
-                                decoration: BoxDecoration(
-                                  color: appTheme.black900,
-                                ),
-                              ),
-                            ),
-                            Align(
-                              alignment: Alignment.bottomRight,
-                              child: Container(
-                                height: 7.v,
-                                width: 1.h,
-                                margin: EdgeInsets.only(right: 12.h),
-                                decoration: BoxDecoration(
-                                  color: appTheme.black900,
-                                ),
-                              ),
-                            ),
-                            CustomImageView(
-                              imagePath: ImageConstant.imgGroupGray400,
-                              height: 1.v,
-                              width: 10.h,
-                              alignment: Alignment.topLeft,
-                              margin: EdgeInsets.only(left: 2.h),
-                            ),
-                            CustomImageView(
-                              imagePath: ImageConstant.imgGroupBlueGray900,
-                              height: 1.v,
-                              width: 10.h,
-                              alignment: Alignment.topLeft,
-                              margin: EdgeInsets.only(left: 126.h),
-                            )
-                          ],
-                        ),
-                      )
-                    ],
-                  ),
-                  SizedBox(height: 10.v),
-                  Padding(
-                    padding: EdgeInsets.only(
-                      left: 13.h,
-                      right: 11.h,
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          "0",
-                          style: theme.textTheme.bodySmall,
-                        ),
-                        Text(
-                          "1",
-                          style: theme.textTheme.bodySmall,
-                        ),
-                        Text(
-                          "2",
-                          style: theme.textTheme.bodySmall,
-                        ),
-                        Text(
-                          "3",
-                          style: theme.textTheme.bodySmall,
-                        ),
-                        Text(
-                          "4",
-                          style: theme.textTheme.bodySmall,
-                        ),
-                        Text(
-                          "5",
-                          style: theme.textTheme.bodySmall,
-                        ),
-                        Text(
-                          "6",
-                          style: theme.textTheme.bodySmall,
-                        ),
-                        Text(
-                          "7",
-                          style: theme.textTheme.bodySmall,
-                        ),
-                        Text(
-                          "8",
-                          style: theme.textTheme.bodySmall,
-                        ),
-                        Text(
-                          "9",
-                          style: theme.textTheme.bodySmall,
-                        )
-                      ],
-                    ),
-                  )
-                ],
-              ),
-            ),
-          )
         ],
       ),
     );
   }
+}
+
+// Model Data untuk Chart
+class SalesData {
+  SalesData(this.time, this.value);
+  final String time;
+  final double value;
 }

@@ -2,7 +2,6 @@ import 'package:aini_s_application1/presentation/tampilan_today_screen/widgets/c
 import 'package:aini_s_application1/presentation/tampilan_today_screen/widgets/lineChart.dart';
 import 'package:flutter/material.dart';
 import '../../core/app_export.dart';
-import 'widgets/viewhierarchylist_item_widget.dart';
 
 // ignore_for_file: must_be_immutable
 class TampilanTodayScreen extends StatefulWidget {
@@ -40,29 +39,11 @@ class _TampilanTodayScreenState extends State<TampilanTodayScreen> {
               SalesChartWidget(), // 🔹 Akan reload saat refresh
               Padding(
                 padding: const EdgeInsets.only(bottom: 20.0),
-                child: Text('Waktu'),
+                child: Text('Time'),
               ),
             ],
           ),
         ),
-      ),
-    );
-  }
-
-  /// Section Widget
-  Widget _buildViewHierarchyList(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(left: 19.h, right: 23.h),
-      child: ListView.separated(
-        physics: NeverScrollableScrollPhysics(),
-        shrinkWrap: true,
-        separatorBuilder: (context, index) {
-          return SizedBox(height: 18.v);
-        },
-        itemCount: 1,
-        itemBuilder: (context, index) {
-          return ViewhierarchylistItemWidget();
-        },
       ),
     );
   }

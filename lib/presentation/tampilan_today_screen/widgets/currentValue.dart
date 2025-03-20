@@ -58,11 +58,10 @@ class LatestSensorData extends StatelessWidget {
         .collection('history')
         .doc(currentDateFormatted)
         .collection(dayOfWeek)
-        .orderBy('timestamp', descending: true) // Gunakan timestamp yang jelas
-        .limit(1) // Hanya ambil satu dokumen terbaru
-        .snapshots(
-            includeMetadataChanges:
-                true); // Pastikan update lokal tetap ditampilkan
+        .orderBy(FieldPath.documentId,
+            descending: true) // 🔥 Urutkan berdasarkan ID (jam terbaru dulu)
+        .limit(1) // 🔥 Ambil hanya 1 dokumen terbaru
+        .snapshots(includeMetadataChanges: true);
   }
 
   // Fungsi untuk mendapatkan nama hari dalam bahasa Indonesia

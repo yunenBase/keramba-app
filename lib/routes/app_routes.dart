@@ -8,8 +8,6 @@ import '../presentation/tampilan_weekly_screen/tampilan_weekly_screen.dart'; // 
 
 // ignore_for_file: must_be_immutable
 class AppRoutes {
-  static const String tampilanAwalScreen = '/tampilan_awal_screen';
-
   static const String tampilanTodayScreen = '/tampilan_today_screen';
 
   static const String tampilanWeeklyScreen = '/tampilan_weekly_screen';
@@ -21,11 +19,10 @@ class AppRoutes {
   static const String initialRoute = '/initialRoute';
 
   static Map<String, WidgetBuilder> routes = {
-    tampilanAwalScreen: (context) => TampilanAwalScreen(),
     tampilanTodayScreen: (context) => TampilanTodayScreen(),
-    // tampilanWeeklyScreen: (context) => TampilanWeeklyScreen(),
+    tampilanWeeklyScreen: (context) => TampilanWeeklyScreen(),
     tampilanThisMonthScreen: (context) => TampilanThisMonthScreen(),
-    // appNavigationScreen: (context) => AppNavigationScreen(),
+    appNavigationScreen: (context) => AppNavigationScreen(),
     initialRoute: (context) => AppNavigationScreen()
   };
 }
